@@ -8,6 +8,7 @@ import argparse
 import os
 import subprocess
 import json
+import re
 from datetime import datetime
 
 def now():
@@ -59,13 +60,15 @@ def extract_info(val):
     - date
     """
     output = []
+    regex = r"[a-f\d]{40}"
     splitted = val.split('\n')
-    for i, row in enumerate(splitted):
-        if 'commit' in row:
+    filtered = [x for x in splitted if 'merge'.upper() not in x.upper()]
+    for i, row in enumerate(filtered):
+        if re.search(regex, row):
             output.append({
-                'commit': extract_by_key('commit', splitted[i]),
-                'author': extract_by_key('Author:', splitted[i+1]),
-                'date': format_date(extract_by_key('Date:', splitted[i+2]))
+                'commit': extract_by_key('commit', filtered[i]),
+                'author': extract_by_key('Author:', filtered[i+1]),
+                'date': format_date(extract_by_key('Date:', filtered[i+2]))
             })
 
     return (len(output), output)
