@@ -81,6 +81,8 @@ def main():
     parser.add_argument('--baseurl', dest='baseurl', required=True)
     parser.add_argument('--repo', dest='repo', required=True)
     args = parser.parse_args()
+    working_dir = os.getcwd()
+    os.chdir('..')
     if not os.path.exists(args.repo):
         os.system('git clone %s/%s' % (args.baseurl, args.repo))
     os.chdir(args.repo)
@@ -88,7 +90,7 @@ def main():
     output = subprocess.check_output('git log', shell=True)
     extracted = extract_info(output)
     result = commit_stats(extracted)
-    os.chdir("..")
+    os.chdir(working_dir)
     fname = '%s-repo-stats-%s.json' % (args.repo, now())
     with open(fname, 'w') as f:
         f.write(json.dumps(result, indent=4))
