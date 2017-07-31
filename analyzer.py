@@ -11,23 +11,16 @@ import json
 import re
 from datetime import datetime
 
-def now():
-    """
-    return current date time preformatted
-    """
-    return datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
-
 def format_date(date_time):
     """
     convert human readable date to datetime
     """
     return datetime.strptime(date_time[:-6], '%a %b %d %H:%M:%S %Y').strftime('%Y-%m-%d %H:%M:%S')
 
-def commit_stats(extracted):
+def commit_stats(values):
     """
     return git diff information with diff stats info
     """
-    total, values = extracted
     result = []
     for row in values:
         stats = subprocess.check_output('git diff --numstat %s' % row['commit'], shell=True)
@@ -41,10 +34,7 @@ def commit_stats(extracted):
                     'file': splitted[2]
                 })
         result.append(row)
-    return {
-        'commits':total,
-        'data':result
-    }
+    return result
 
 def extract_by_key(key, val):
     """
@@ -72,7 +62,7 @@ def extract_info(val):
                 'date': format_date(extract_by_key('Date:', filtered[i+2]))
             })
 
-    return (len(output), output)
+    return output
 
 def main():
     """
