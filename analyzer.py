@@ -28,7 +28,6 @@ def commit_stats(extracted):
     return git diff information with diff stats info
     """
     total, values = extracted
-    final = []
     result = []
     for row in values:
         stats = subprocess.check_output('git diff --numstat %s' % row['commit'], shell=True)
@@ -42,8 +41,10 @@ def commit_stats(extracted):
                     'file': splitted[2]
                 })
         result.append(row)
-    final.append({'commits': total, 'stats': result})
-    return final
+    return {
+        'commits':total,
+        'data':result
+    }
 
 def extract_by_key(key, val):
     """
@@ -73,6 +74,22 @@ def extract_info(val):
 
     return (len(output), output)
 
+def aggregate(result, tracked_files):
+    """
+    tag data with number of lines and files
+    """
+    addition = 0
+    deletion = 0
+    total_files = len(tracked_files.split('\n'))
+    for val in result['data']:
+        for stat in val['stats']:
+            addition = addition + int(stat['addition'])
+            deletion = deletion + int(stat['deletion'])
+    total_lines = addition - deletion
+    result['lines'] = total_lines
+    result['files'] = total_files
+    return result
+
 def main():
     """
     Main Function execution
@@ -88,12 +105,14 @@ def main():
     os.chdir(args.repo)
     os.system('git pull -r origin master')
     output = subprocess.check_output('git log', shell=True)
+    tracked_files = subprocess.check_output('git ls-tree -r master --name-only', shell=True)
     extracted = extract_info(output)
     result = commit_stats(extracted)
+    aggregated = aggregate(result, tracked_files)
     os.chdir(working_dir)
-    fname = '%s-repo-stats-%s.json' % (args.repo, now())
-    with open(fname, 'w') as f:
-        f.write(json.dumps(result, indent=4))
+    fname = '%s-repo-stats.json' % args.repo
+    with open(fname, 'w') as filename:
+        filename.write(json.dumps(aggregated, indent=4))
         print "Output: %s" % fname
 
 if __name__ == '__main__':
