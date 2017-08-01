@@ -119,10 +119,13 @@ def main():
         order by
             datetime,
             HOUR(date),
-            MINUTE(date)
+            MINUTE(date) 
+        DESC
         """)
     print count.collect()
     fname = '%s-repo-stats.json' % args.repo
+    if os.path.exists(fname):
+        os.system('rm -rf %s' % fname)
     count.coalesce(1).write.json(fname)
 
 if __name__ == '__main__':
