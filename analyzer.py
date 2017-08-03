@@ -6,7 +6,7 @@ Git statistic analyzer
 import argparse
 import os
 import subprocess
-#import json
+import json
 import re
 from datetime import datetime, timedelta
 from pyspark.sql import SparkSession
@@ -45,6 +45,7 @@ def commit_stats(values):
             splitted = info.split()
             if splitted:
                 result.append({
+                    'repo': row['repo'],
                     'date': row['date'],
                     'commit': row['commit'],
                     'author': row['author'],
@@ -61,7 +62,7 @@ def extract_by_key(key, val):
     splitted = val.split(key)
     return splitted[1].strip()
 
-def extract_info(val):
+def extract_info(val, repo):
     """
     Extract the necessary information such as:
     - commit id
@@ -75,6 +76,7 @@ def extract_info(val):
     for i, row in enumerate(filtered):
         if re.search(regex, row):
             output.append({
+                'repo': repo,
                 'commit': extract_by_key('commit', filtered[i]),
                 'author': extract_by_key('Author:', filtered[i+1]),
                 'date': format_date(extract_by_key('Date:', filtered[i+2]))
@@ -88,23 +90,28 @@ def main():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('--baseurl', dest='baseurl', required=True)
-    parser.add_argument('--repo', dest='repo', required=True)
+    parser.add_argument('--repo', dest='repo', nargs='+', required=True)
     args = parser.parse_args()
     spark = SparkSession.builder.master('local').appName("git analyzer").getOrCreate()
     working_dir = os.getcwd()
-    os.chdir('..')
-    if not os.path.exists(args.repo):
-        os.system('git clone %s/%s' % (args.baseurl, args.repo))
-    os.chdir(args.repo)
-    os.system('git pull -r origin master')
-    output = subprocess.check_output('git log', shell=True)
-    extracted = extract_info(output)
-    result = commit_stats(extracted)
-    os.chdir(working_dir)
+    stats_lists = []
+    for repo in args.repo:
+        os.chdir('..')
+        if not os.path.exists(repo):
+            os.system('git clone %s/%s' % (args.baseurl, repo))
+        os.chdir(repo)
+        os.system('git pull -r origin master')
+        output = subprocess.check_output('git log', shell=True)
+        extracted = extract_info(output, repo)
+        stats = commit_stats(extracted)
+        stats_lists.append(stats)
+        os.chdir(working_dir)
+    result = [item for row in stats_lists for item in row]
     data_frame = spark.createDataFrame(result)
     data_frame.registerTempTable("data_frame")
     count = spark.sql("""
         select
+            repo,
             sum(addition) as addition,
             sum(deletion) as deletion,
             sum(addition - deletion) as lines,
@@ -113,20 +120,23 @@ def main():
             MINUTE(date) as minute
         from data_frame
         group by
+            repo,
             datetime,
             HOUR(date),
             MINUTE(date)
         order by
+            repo,
             datetime,
             HOUR(date),
             MINUTE(date) 
         DESC
         """)
-    print count.collect()
-    fname = '%s-repo-stats.json' % args.repo
-    if os.path.exists(fname):
-        os.system('rm -rf %s' % fname)
-    count.write.json(fname)
+    fname = 'repo-stats.json'
+#    if os.path.exists(fname):
+#        os.system('rm -rf %s' % fname)
+    with open(fname, 'w') as writefile:
+        writefile.write(json.dumps(count.toPandas().to_dict(orient='records'), indent=4))
+        print "Output: %s" % fname
 
 if __name__ == '__main__':
     main()
