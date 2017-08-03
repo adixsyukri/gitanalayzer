@@ -10,7 +10,7 @@ Git Analyzer
     cd gitanalyzer
     virtualenv venv
     source venv/bin/activate
-    pip install pyspark pandas
+    pip install pyspark
 
 ## Run
     spark-submit analyzer.py --baseurl <<git root url>> --repo <<repo1>> <<repo2>> <<repo3>>
