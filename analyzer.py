@@ -132,11 +132,14 @@ def main():
         DESC
         """)
     fname = 'repo-stats.json'
+    temp = 'temp.json'
 #    if os.path.exists(fname):
 #        os.system('rm -rf %s' % fname)
-    with open(fname, 'w') as writefile:
+    with open(temp, 'w') as writefile:
         writefile.write(json.dumps(count.toPandas().to_dict(orient='records'), indent=4))
         print "Output: %s" % fname
+    
+    os.system('mv %s %s' % (temp, fname))
 
 if __name__ == '__main__':
     main()
