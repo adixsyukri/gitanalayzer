@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="refresh" content="300">
+    <meta http-equiv="refresh" content="60">
 
     <title>TNB Hackathon@UniTEN</title>
     <!-- Latest compiled and minified CSS -->
@@ -19,22 +19,59 @@
     <![endif]-->
 
     <!-- Optional theme -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://bootswatch.com/darkly/bootstrap.min.css">
 
-    <link rel="stylesheet" href="http://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
-    <script src="http://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+    <!-- Chart css -->
+    <link rel="stylesheet" href="./node_modules/dc/dc.min.css">
+    <style>
+        text {
+            fill: #999999;
+        }
+        
+        .huge {
+            font-size: 32px;
+        }
+    </style>
 </head>
 
 <body>
     <div class="container">
-        <div class="ct-chart ct-perfect-fourth"></div>
+        <div class="row page-header">
+            <h1 id="typography">SmartCity Hackathon @ UniTEN</h1>
+        </div>
+        <div class="row">
+            <div id="chart"></div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <span><b>Total Commits</b></span>
+                    </div>
+                    <div class="panel-body huge">
+                        <div id="commits"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <span><b>Total Line Changes</b></span>
+                    </div>
+                    <div class="panel-body huge">
+                        <div id="lineChanges"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <script src="require.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <!-- Latest compiled and minified JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-
-    <script src="chart.js"></script>
+    <script src="./node_modules/d3/d3.min.js"></script>
+    <script src="./node_modules/crossfilter2/crossfilter.min.js"></script>
+    <script src="./node_modules/dc/dc.min.js"></script>
+    <script src="chart.js "></script>
 
 </body>
 

@@ -114,7 +114,7 @@ def main():
             repo,
             sum(addition) as addition,
             sum(deletion) as deletion,
-            sum(addition - deletion) as lines,
+            sum(addition + deletion) as lines_change,
             date as datetime,
             HOUR(date) as hour,
             MINUTE(date) as minute
