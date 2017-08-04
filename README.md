@@ -19,5 +19,6 @@ Git Analyzer
     spark-submit analyzer.py --baseurl git@github.com:adixsyukri --repo gitanalyzer dc-wordcloud hdp-ansible-role
 
 ## Dashboard
+    npm install
     node server.js
     access http://localhost:8080
