@@ -13,8 +13,11 @@ Git Analyzer
     pip install pyspark
 
 ## Run
-    spark-submit analyzer.py --baseurl <<git root url>> --repo <<repo1>> <<repo2>> <<repo3>>
+    spark-submit analyzer.py --baseurl <<git ssh url>> --repo <<repo1>> <<repo2>> <<repo3>>
 
     example:
-    spark-submit analyzer.py --baseurl https://github.com/adixsyukri --repo gitanalyzer dc-wordcloud hdp-ansible-role
+    spark-submit analyzer.py --baseurl git@github.com:adixsyukri --repo gitanalyzer dc-wordcloud hdp-ansible-role
 
+## Dashboard
+    node server.js
+    access http://localhost:8080
