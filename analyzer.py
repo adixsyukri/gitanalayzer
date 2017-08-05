@@ -62,7 +62,7 @@ def commit_stats(values):
                     'author': row['author'],
                     'addition': '0',
                     'deletion': '0',
-                    'file': "No"
+                    'file': "Yes"
                 })
     return result
 
@@ -115,6 +115,15 @@ def main():
         os.chdir(repo)
         print repo
         os.system('git pull -r origin master')
+        stats_lists.append([{
+            'repo': repo,
+            'date': format_date(extract_by_key('Date:', 'Date:   Sat Aug 5 09:00:00 2017 +0800')),
+            'commit': 'nocommit',
+            'author': 'noauthor',
+            'addition': '0',
+            'deletion': '0',
+            'file': 'No'
+        }])
         try:
             print "try git log %s" % repo
             output = subprocess.check_output('git log', shell=True)
@@ -137,7 +146,7 @@ def main():
                 commit,
                 sum(addition + deletion) as lines_change,
                 date as datetime,
-                1 as count
+                CASE WHEN commit == "nocommit" then 0 else 1 end count
             from data_frame
             group by
                 repo,
@@ -146,12 +155,12 @@ def main():
             order by
                 repo,
                 commit,
-                datetime 
+                datetime
             DESC
             """)
         fname = working_dir + '/repo-stats.json'
         temp = working_dir + '/temp.json'
-        print temp
+        print "temp json: %s" % temp
         with open(temp, 'w') as writefile:
             writefile.write(json.dumps(count.toPandas().to_dict(orient='records'), indent=4))
             print "Output: %s" % fname

@@ -22,22 +22,80 @@ let reducer = [
     }
 ]
 
-function drop_to_zero_group(key_gap, group) {
+/*function drop_to_zero_group(key_gap, group) {
     return {
         all: function() {
             var _all = group.all(),
                 result = [];
             _all.forEach(function(kv) {
                 result.push(kv);
-                result.push({ key: key_gap(kv.key), value: 0 });
+                result.push({ key: key_gap(kv.key, "add"), value: 0 });
+                result.push({ key: key_gap(kv.key, "minus"), value: 0 });
             })
             return result;
         }
     }
 }
 
-function increment_date(val) {
-    return [val[0], new Date(val[1].getTime() - 1)];
+function increment_date(val, str) {
+    if (str == "add") {
+        return [val[0], new Date(val[1].getTime() + 1)];
+    } else {
+        return [val[0], new Date(val[1].getTime() - 1)];
+    }
+}*/
+
+function findSumOfRepo(acc, item, index) {
+    sum = item.value;
+    console.log(acc, item, index)
+    if (index > 0) {
+        for (i = index; i > 0; i--) {
+            if (acc[i - 1].key[0] == item.key[0]) {
+                sum = sum + acc[i - 1].value
+                break;
+            }
+        }
+    }
+
+    return sum;
+}
+
+function createCumulativeGroup(group) {
+    /**
+     * Aggregate ordered list to produce cumulative sum of its values
+     *
+     * @param {Array} list 
+     * @returns {Array}
+     */
+    function aggregate(list) {
+        return list.reduce((acc, item, index) => {
+            sum = findSumOfRepo(acc, item, index)
+            acc[index] = {
+                key: item.key,
+                value: sum
+            };
+
+            return acc;
+        }, []);
+    }
+
+    // We need only limited set of methods to implement:
+    // all(), top(n) and dispose() are enought to draw a chart.
+    return {
+        all() {
+            return aggregate(group.all());
+        },
+
+        top(n) {
+            return aggregate(group.top(Infinity)).splice(0, n);
+        },
+
+        dispose() {
+            if (group.dispose) {
+                group.dispose();
+            }
+        }
+    };
 }
 
 d3.json('repo-stats.json', function(data) {
@@ -54,24 +112,23 @@ d3.json('repo-stats.json', function(data) {
         let group = dim.group().reduceSum(function(d) {
             return +d.count
         })
-
         chart.options({
             width: 1300,
             height: 580,
             chart: function(d) {
-                return dc.lineChart(d).interpolate('cardinal').evadeDomainFilter(true);
+                return dc.lineChart(d).interpolate('linear').evadeDomainFilter(true);
             },
             x: d3.time.scale().domain([new Date(Math.min.apply(null, dates_list)), new Date(Math.max.apply(null, dates_list))]),
             brushOn: false,
-            yAxisLabel: "Number of commmits per 5 minutes",
+            yAxisLabel: "Sum of number of commits",
             xAxisLabel: "Time",
             elasticY: true,
             dimension: dim,
-            group: drop_to_zero_group(increment_date, group),
+            group: createCumulativeGroup(group),
             seriesAccessor: function(d) { return d.key[0]; },
             keyAccessor: function(d) { return d.key[1] },
             valueAccessor: function(d) { return d.value },
-            legend: dc.legend().x(1100).y(10).itemHeight(13).gap(7).horizontal(1).legendWidth(300).itemWidth(300),
+            legend: dc.legend().x(1150).y(10).itemHeight(13).gap(7).horizontal(1).legendWidth(300).itemWidth(300),
             label: function(d) {
                 return d.key + ": " + d.value
             }
@@ -163,6 +220,6 @@ d3.json('repo-stats.json', function(data) {
             }, 5000)
         }
 
-        reload();
+        //reload();
     }
 })
