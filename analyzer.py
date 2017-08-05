@@ -54,6 +54,16 @@ def commit_stats(values):
                     'deletion': splitted[1],
                     'file': splitted[2]
                 })
+            else:
+                result.append({
+                    'repo': row['repo'],
+                    'date': row['date'],
+                    'commit': row['commit'],
+                    'author': row['author'],
+                    'addition': '0',
+                    'deletion': '0',
+                    'file': "No"
+                })
     return result
 
 def extract_by_key(key, val):
@@ -103,6 +113,7 @@ def main():
             print repo
             os.system('git clone %s/%s' % (args.baseurl, repo))
         os.chdir(repo)
+        print repo
         os.system('git pull -r origin master')
         try:
             output = subprocess.check_output('git log', shell=True)
@@ -113,40 +124,41 @@ def main():
         stats = commit_stats(extracted)
         stats_lists.append(stats)
         os.chdir(working_dir)
-    result = [item for row in stats_lists for item in row]
-    data_frame = spark.createDataFrame(result)
-    data_frame.registerTempTable("data_frame")
-    count = spark.sql("""
-        select
-            repo,
-            sum(addition) as addition,
-            sum(deletion) as deletion,
-            sum(addition + deletion) as lines_change,
-            date as datetime,
-            HOUR(date) as hour,
-            MINUTE(date) as minute
-        from data_frame
-        group by
-            repo,
-            datetime,
-            HOUR(date),
-            MINUTE(date)
-        order by
-            repo,
-            datetime,
-            HOUR(date),
-            MINUTE(date) 
-        DESC
-        """)
-    fname = 'repo-stats.json'
-    temp = 'temp.json'
-#    if os.path.exists(fname):
-#        os.system('rm -rf %s' % fname)
-    with open(temp, 'w') as writefile:
-        writefile.write(json.dumps(count.toPandas().to_dict(orient='records'), indent=4))
-        print "Output: %s" % fname
-    
-    os.system('mv %s %s' % (temp, fname))
-
+    if stats_lists:
+        result = [item for row in stats_lists for item in row]
+        data_frame = spark.createDataFrame(result)
+        data_frame.registerTempTable("data_frame")
+        count = spark.sql("""
+            select
+                repo,
+                sum(addition) as addition,
+                sum(deletion) as deletion,
+                sum(addition + deletion) as lines_change,
+                date as datetime,
+                HOUR(date) as hour,
+                MINUTE(date) as minute
+            from data_frame
+            group by
+                repo,
+                datetime,
+                HOUR(date),
+                MINUTE(date)
+            order by
+                repo,
+                datetime,
+                HOUR(date),
+                MINUTE(date) 
+            DESC
+            """)
+        fname = working_dir + '/repo-stats.json'
+        temp = working_dir + '/temp.json'
+        print temp
+    #    if os.path.exists(fname):
+    #        os.system('rm -rf %s' % fname)
+        with open(temp, 'w') as writefile:
+            writefile.write(json.dumps(count.toPandas().to_dict(orient='records'), indent=4))
+            print "Output: %s" % fname
+        os.system('mv %s %s' % (temp, fname))
+    print "no data available"
 if __name__ == '__main__':
     main()

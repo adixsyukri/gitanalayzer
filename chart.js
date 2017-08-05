@@ -154,6 +154,7 @@ d3.json('repo-stats.json', function(data) {
         var reload = function() {
             setTimeout(function() {
                 d3.json('repo-stats.json', function(data2) {
+                    console.debug("Time: " + new Date())
                     ndx.remove();
                     ndx.add(data2);
                     dc.redrawAll();
