@@ -116,11 +116,14 @@ def main():
         print repo
         os.system('git pull -r origin master')
         try:
+            print "try git log %s" % repo
             output = subprocess.check_output('git log', shell=True)
         except CalledProcessError:
             print "No log yet"
             continue
+        print "extract info %s" % repo
         extracted = extract_info(output, repo)
+        print "get commit stats %s" % repo
         stats = commit_stats(extracted)
         stats_lists.append(stats)
         os.chdir(working_dir)
@@ -131,34 +134,29 @@ def main():
         count = spark.sql("""
             select
                 repo,
-                sum(addition) as addition,
-                sum(deletion) as deletion,
+                commit,
                 sum(addition + deletion) as lines_change,
                 date as datetime,
-                HOUR(date) as hour,
-                MINUTE(date) as minute
+                1 as count
             from data_frame
             group by
                 repo,
-                datetime,
-                HOUR(date),
-                MINUTE(date)
+                commit,
+                datetime
             order by
                 repo,
-                datetime,
-                HOUR(date),
-                MINUTE(date) 
+                commit,
+                datetime 
             DESC
             """)
         fname = working_dir + '/repo-stats.json'
         temp = working_dir + '/temp.json'
         print temp
-    #    if os.path.exists(fname):
-    #        os.system('rm -rf %s' % fname)
         with open(temp, 'w') as writefile:
             writefile.write(json.dumps(count.toPandas().to_dict(orient='records'), indent=4))
             print "Output: %s" % fname
         os.system('mv %s %s' % (temp, fname))
-    print "no data available"
+    else:
+        print "no data available"
 if __name__ == '__main__':
     main()

@@ -6,12 +6,12 @@ let repotable = dc.dataTable("#repotable");
 let reducer = [
     function(p, v) {
         p.sum += +v.lines_change;
-        p.count += 1;
+        p.count += +v.count;
         return p
     },
     function(p, v) {
         p.sum -= +v.lines_change;
-        p.count -= 1;
+        p.count -= +v.count;
         return p
     },
     function(p, v) {
@@ -51,8 +51,8 @@ d3.json('repo-stats.json', function(data) {
             return [d.repo, new Date(d.datetime)]
         })
 
-        let group = dim.group().reduceCount(function(d) {
-            return +d
+        let group = dim.group().reduceSum(function(d) {
+            return +d.count
         })
 
         chart.options({
@@ -63,7 +63,7 @@ d3.json('repo-stats.json', function(data) {
             },
             x: d3.time.scale().domain([new Date(Math.min.apply(null, dates_list)), new Date(Math.max.apply(null, dates_list))]),
             brushOn: false,
-            yAxisLabel: "Number of line changes",
+            yAxisLabel: "Number of commmits per 5 minutes",
             xAxisLabel: "Time",
             elasticY: true,
             dimension: dim,
@@ -84,8 +84,8 @@ d3.json('repo-stats.json', function(data) {
 
         let commitDim = ndx.dimension(function(d) {
             return d
-        }).group().reduceCount(function(d) {
-            return d
+        }).group().reduceSum(function(d) {
+            return +d.count
         })
 
         commits.group(commitDim)
@@ -112,12 +112,12 @@ d3.json('repo-stats.json', function(data) {
 
         let groupTableDim = tableDim.group().reduce(
             function(p, v) {
-                ++p.count;
+                p.count += +v.count;
                 p.sum += +v.lines_change;
                 return p;
             },
             function(p, v) {
-                --p.count;
+                p.count -= +v.count;
                 p.sum -= +v.lines_change;
                 return p;
             },
