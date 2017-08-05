@@ -6,6 +6,7 @@ Git statistic analyzer
 import argparse
 import os
 import subprocess
+from subprocess import CalledProcessError
 import json
 import re
 from datetime import datetime, timedelta
@@ -98,10 +99,16 @@ def main():
     for repo in args.repo:
         os.chdir('..')
         if not os.path.exists(repo):
+            print args.baseurl
+            print repo
             os.system('git clone %s/%s' % (args.baseurl, repo))
         os.chdir(repo)
         os.system('git pull -r origin master')
-        output = subprocess.check_output('git log', shell=True)
+        try:
+            output = subprocess.check_output('git log', shell=True)
+        except CalledProcessError:
+            print "No log yet"
+            continue
         extracted = extract_info(output, repo)
         stats = commit_stats(extracted)
         stats_lists.append(stats)
