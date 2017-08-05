@@ -51,15 +51,15 @@ d3.json('repo-stats.json', function(data) {
             return [d.repo, new Date(d.datetime)]
         })
 
-        let group = dim.group().reduceSum(function(d) {
-            return d.lines_change
+        let group = dim.group().reduceCount(function(d) {
+            return +d
         })
 
         chart.options({
             width: 1300,
             height: 580,
             chart: function(d) {
-                return dc.lineChart(d).interpolate('linear').evadeDomainFilter(true);
+                return dc.lineChart(d).interpolate('cardinal').evadeDomainFilter(true);
             },
             x: d3.time.scale().domain([new Date(Math.min.apply(null, dates_list)), new Date(Math.max.apply(null, dates_list))]),
             brushOn: false,
